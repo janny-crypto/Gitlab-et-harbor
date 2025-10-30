@@ -1,0 +1,57 @@
+stages:
+  - build
+  - push
+
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+  BACKEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/backend"
+  FRONTEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/frontend"
+
+build_backend:
+  image: docker:24.0.5-cli
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+  stage: build
+  before_script:
+    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
+  script:
+    - docker build -t "$BACKEND_IMAGE:$CI_COMMIT_SHA" ./backend
+  artifacts:
+    paths:
+      - backend
+
+build_frontend:
+  image: docker:24.0.5-cli
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+  stage: build
+  before_script:
+    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
+  script:
+    - docker build -t "$FRONTEND_IMAGE:$CI_COMMIT_SHA" ./frontend
+  artifacts:
+    paths:
+      - frontend
+
+push_images:
+  image: docker:24.0.5-cli
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+  stage: push
+  before_script:
+    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
+  script:
+    - docker push "$BACKEND_IMAGE:$CI_COMMIT_SHA"
+    - docker push "$FRONTEND_IMAGE:$CI_COMMIT_SHA"
+    # Optionnel : tag “latest” pour la branche principale
+    - |
+      if [ "$CI_COMMIT_REF_NAME" == "main" ]; then
+        docker tag "$BACKEND_IMAGE:$CI_COMMIT_SHA" "$BACKEND_IMAGE:latest"
+        docker push "$BACKEND_IMAGE:latest"
+        docker tag "$FRONTEND_IMAGE:$CI_COMMIT_SHA" "$FRONTEND_IMAGE:latest"
+        docker push "$FRONTEND_IMAGE:latest"
+      fi
