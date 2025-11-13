@@ -15,7 +15,7 @@ docker_login:
   image: "docker:latest"
   services:
     - name: docker:dind
-      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
   before_script:
     - echo "192.168.88.116 harbor.host" >> /etc/hosts
   script:
@@ -29,6 +29,7 @@ build:
   services:
     - name: docker:24.0.5-dind
       alias: docker
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
   script:
@@ -45,6 +46,7 @@ push_images:
   services:
     - name: docker:24.0.5-dind
       alias: docker
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
   script:
