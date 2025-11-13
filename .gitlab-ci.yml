@@ -21,9 +21,9 @@ docker_login:
 
 build_frontend:
   stage: build
-  image: docker:latest
+  image: docker:24.0.5-cli
   services:
-    - name: docker:dind
+    - name: docker:24.0.5-dind
       command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
   variables:
     DOCKER_HOST: tcp://docker:2375/
@@ -37,9 +37,9 @@ build_frontend:
 
 build_backend:
   stage: build
-  image: docker:latest
+  image: docker:24.0.5-cli
   services:
-    - name: docker:dind
+    - name: docker:24.0.5-dind
       command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
   
   variables:
