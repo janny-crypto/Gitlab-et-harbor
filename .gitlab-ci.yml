@@ -21,7 +21,6 @@ docker_login:
       command: ["--tls=false", "--insecure-registry=${HARBOR_REGISTRY}"]
   before_script:
     - echo "192.168.88.116 harbor.host" >> /etc/hosts
-    - until docker info; do sleep 1; done
   script:
     - echo "$HARBOR_PASSWORD" | docker login "http://${HARBOR_REGISTRY}" -u "$HARBOR_USERNAME" --password-stdin
   only:
