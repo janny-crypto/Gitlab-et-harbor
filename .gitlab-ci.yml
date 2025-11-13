@@ -34,14 +34,15 @@ build_frontend:
   stage: build
   script:
     - cd frontend
-    - docker build -t http://harbor.host:8086/projects/mardi/frontend:latest .
-    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
-    - docker push http://harbor.host:8086/projects/mardi/frontend:latest
+    - docker build -t harbor.host:8086/mardi/frontend:latest .
+    - echo "$HARBOR_PASSWORD" | docker login harbor.host:8086 -u "$HARBOR_USERNAME" --password-stdin
+    - docker push harbor.host:8086/mardi/frontend:latest
 
 build_backend:
   stage: build
   script:
     - cd backend
-    - docker build -t http://harbor.host:8086/projects/mardi/backend:latest .
-    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
-    - docker push http://harbor.host:8086/projects/mardi/backend:latest
+    - docker build -t harbor.host:8086/mardi/backend:latest .
+    - echo "$HARBOR_PASSWORD" | docker login harbor.host:8086 -u "$HARBOR_USERNAME" --password-stdin
+    - docker push harbor.host:8086/mardi/backend:latest
+
