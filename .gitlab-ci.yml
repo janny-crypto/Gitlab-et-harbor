@@ -2,26 +2,27 @@ stages:
   - login
   - build
   - push
-  - debug 
-  
+  - debug
+
 variables:
   HARBOR_REGISTRY: "harbor.host:8086"
-  DOCKER_HOST: "tcp://docker:2375"  # Utilisez l'alias docker
-  DOCKER_TLS_CERTDIR: ""
-  BACKEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/backend"
-  FRONTEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/frontend"
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""                 # TLS désactivé
+  BACKEND_IMAGE: "${HARBOR_REGISTRY}/${HARBOR_PROJECT}/backend"
+  FRONTEND_IMAGE: "${HARBOR_REGISTRY}/${HARBOR_PROJECT}/frontend"
 
 docker_login:
   stage: login
-  image: "docker:latest"
+  image: "docker:24.0.5-cli"
   services:
     - name: docker:24.0.5-dind
       alias: docker
       command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
   before_script:
+    - until docker info; do sleep 1; done   # attendre que le daemon soit prêt
     - echo "192.168.88.116 harbor.host" >> /etc/hosts
   script:
-    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
+    - echo "$HARBOR_PASSWORD" | docker login "http://${HARBOR_REGISTRY}" -u "$HARBOR_USERNAME" --password-stdin
   only:
     - main
 
@@ -33,7 +34,8 @@ build:
       alias: docker
       command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
   before_script:
-    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
+    - until docker info; do sleep 1; done
+    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_REGISTRY"
   script:
     - docker build -t "$BACKEND_IMAGE:$CI_COMMIT_SHA" ./backend
     - docker build -t "$FRONTEND_IMAGE:$CI_COMMIT_SHA" ./frontend
@@ -50,7 +52,8 @@ push_images:
       alias: docker
       command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
   before_script:
-    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
+    - until docker info; do sleep 1; done
+    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_REGISTRY"
   script:
     - docker push "$BACKEND_IMAGE:$CI_COMMIT_SHA"
     - docker push "$FRONTEND_IMAGE:$CI_COMMIT_SHA"
@@ -59,7 +62,7 @@ push_images:
         docker tag "$BACKEND_IMAGE:$CI_COMMIT_SHA" "$BACKEND_IMAGE:latest"
         docker push "$BACKEND_IMAGE:latest"
         docker tag "$FRONTEND_IMAGE:$CI_COMMIT_SHA" "$FRONTEND_IMAGE:latest"
-        docker push "$FRONTEND_IMAGE:latest"
+        docker.push "$FRONTEND_IMAGE:latest"
       fi
 
 debug:
@@ -69,6 +72,8 @@ debug:
     - name: docker:24.0.5-dind
       alias: docker
       command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
+  before_script:
+    - until docker info; do sleep 1; done
   script:
-    - docker info  # Vérifiez si Docker est accessible
-    - curl -v http://docker:2375/version  # Vérifiez la connectivité
+    - docker info
+    - curl -v http://docker:2375/version
