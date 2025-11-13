@@ -1,53 +1,55 @@
 stages:
+  - login
   - build
   - push
 
 variables:
+  HARBOR_REGISTRY: "harbor.host:8086"
   DOCKER_HOST: "tcp://docker:2375"
   DOCKER_TLS_CERTDIR: ""
   BACKEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/backend"
   FRONTEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/frontend"
 
-build_backend:
+docker_login:
+  stage: login
+  image: "docker:latest"
+  services:
+    - name: docker:dind
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
+  before_script:
+    - echo "192.168.88.116 harbor.host" >> /etc/hosts
+  script:
+    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
+  only:
+    - main
+
+build:
+  stage: build
   image: docker:24.0.5-cli
   services:
     - name: docker:24.0.5-dind
       alias: docker
-  stage: build
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
   script:
     - docker build -t "$BACKEND_IMAGE:$CI_COMMIT_SHA" ./backend
-  artifacts:
-    paths:
-      - backend
-
-build_frontend:
-  image: docker:24.0.5-cli
-  services:
-    - name: docker:24.0.5-dind
-      alias: docker
-  stage: build
-  before_script:
-    - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
-  script:
     - docker build -t "$FRONTEND_IMAGE:$CI_COMMIT_SHA" ./frontend
   artifacts:
     paths:
+      - backend
       - frontend
 
 push_images:
+  stage: push
   image: docker:24.0.5-cli
   services:
     - name: docker:24.0.5-dind
       alias: docker
-  stage: push
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
   script:
     - docker push "$BACKEND_IMAGE:$CI_COMMIT_SHA"
     - docker push "$FRONTEND_IMAGE:$CI_COMMIT_SHA"
-    # Optionnel : tag “latest” pour la branche principale
     - |
       if [ "$CI_COMMIT_REF_NAME" == "main" ]; then
         docker tag "$BACKEND_IMAGE:$CI_COMMIT_SHA" "$BACKEND_IMAGE:latest"
