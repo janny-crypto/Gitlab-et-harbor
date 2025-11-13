@@ -38,6 +38,8 @@ build:
     HARBOR_REGISTRY: "harbor.host:8086"
     DOCKER_TLS_CERTDIR: ""
     DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_DRIVER: overlay2
+    DOCKER_DNS: "8.8.8.8"
   before_script:
     - echo "192.168.88.116 harbor.host" >> /etc/hosts
   script:
