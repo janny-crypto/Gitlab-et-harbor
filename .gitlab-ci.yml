@@ -1,5 +1,6 @@
 stages:
   - login
+  - build
   
 docker_login:
   stage: login
@@ -17,3 +18,30 @@ docker_login:
     - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
   only:
     - main
+
+
+docker_build:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  
+  variables:
+    DOCKER_HOST: tcp://docker:2375/
+    DOCKER_DRIVER: overlay2
+
+build_frontend:
+  stage: build
+  script:
+    - cd frontend
+    - docker build -t http://harbor.host:8086/projects/mardi/frontend:latest .
+    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
+    - docker push http://harbor.host:8086/projects/mardi/frontend:latest
+
+build_backend:
+  stage: build
+  script:
+    - cd backend
+    - docker build -t http://harbor.host:8086/projects/mardi/backend:latest .
+    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
+    - docker push http://harbor.host:8086/projects/mardi/backend:latest
