@@ -5,12 +5,8 @@ stages:
   - debug
 
 variables:
-  HARBOR_REGISTRY: "harbor.host:8086"
   DOCKER_TLS_CERTDIR: ""
-  # On met aussi le DOCKER_HOST pour DinD
   DOCKER_HOST: "tcp://docker:2375"
-  # Projet harbor : adaptez « monprojet » à votre valeur
-  HARBOR_PROJECT: "mardi"
   DOCKER_DRIVER: "overlay2"
 
 docker_login:
