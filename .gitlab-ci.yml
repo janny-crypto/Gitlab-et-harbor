@@ -14,7 +14,8 @@ docker_login:
   stage: login
   image: "docker:latest"
   services:
-    - name: docker:dind
+    - name: docker:24.0.5-dind
+      alias: docker
       command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
   before_script:
     - echo "192.168.88.116 harbor.host" >> /etc/hosts
