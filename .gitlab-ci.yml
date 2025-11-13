@@ -10,7 +10,7 @@ variables:
   # On met aussi le DOCKER_HOST pour DinD
   DOCKER_HOST: "tcp://docker:2375"
   # Projet harbor : adaptez « monprojet » à votre valeur
-  HARBOR_PROJECT: "monprojet"
+  HARBOR_PROJECT: "mardi"
 
 docker_login:
   stage: login
