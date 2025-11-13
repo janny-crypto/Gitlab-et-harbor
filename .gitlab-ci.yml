@@ -11,6 +11,7 @@ variables:
   DOCKER_HOST: "tcp://docker:2375"
   # Projet harbor : adaptez « monprojet » à votre valeur
   HARBOR_PROJECT: "mardi"
+  DOCKER_DRIVER: "overlay2"
 
 docker_login:
   stage: login
@@ -31,9 +32,9 @@ docker_login:
 
 build:
   stage: build
-  image: "docker:latest"
+  image: docker:24.0.5-cli
   services:
-    - name: docker:dind
+    - name: docker:24.0.5-dind
       alias: docker
       command: ["--tls=false", "--insecure-registry=${HARBOR_REGISTRY}"]
   before_script:
