@@ -2,10 +2,11 @@ stages:
   - login
   - build
   - push
-
+  - debug 
+  
 variables:
   HARBOR_REGISTRY: "harbor.host:8086"
-  DOCKER_HOST: "tcp://127.0.0.1:2375"
+  DOCKER_HOST: "tcp://docker:2375"  # Utilisez l'alias docker
   DOCKER_TLS_CERTDIR: ""
   BACKEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/backend"
   FRONTEND_IMAGE: "${HARBOR_HOST}/${HARBOR_PROJECT}/frontend"
@@ -16,7 +17,7 @@ docker_login:
   services:
     - name: docker:24.0.5-dind
       alias: docker
-      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
   before_script:
     - echo "192.168.88.116 harbor.host" >> /etc/hosts
   script:
@@ -30,7 +31,7 @@ build:
   services:
     - name: docker:24.0.5-dind
       alias: docker
-      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
   script:
@@ -47,7 +48,7 @@ push_images:
   services:
     - name: docker:24.0.5-dind
       alias: docker
-      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]  # Désactiver TLS
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login -u "$HARBOR_USERNAME" --password-stdin "$HARBOR_HOST"
   script:
@@ -60,3 +61,14 @@ push_images:
         docker tag "$FRONTEND_IMAGE:$CI_COMMIT_SHA" "$FRONTEND_IMAGE:latest"
         docker push "$FRONTEND_IMAGE:latest"
       fi
+
+debug:
+  stage: debug
+  image: docker:24.0.5-cli
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+      command: ["--tls=false", "--insecure-registry=$HARBOR_REGISTRY"]
+  script:
+    - docker info  # Vérifiez si Docker est accessible
+    - curl -v http://docker:2375/version  # Vérifiez la connectivité
