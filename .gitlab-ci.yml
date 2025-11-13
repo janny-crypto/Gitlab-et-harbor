@@ -26,6 +26,7 @@ docker_login:
   only:
     - main
 
+
 build:
   stage: build
   image: docker:24.0.5-cli
