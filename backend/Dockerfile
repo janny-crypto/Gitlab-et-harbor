@@ -5,7 +5,7 @@ COPY src/ .
 RUN go build -o backend .
 
 # Étape finale
-FROM 192.168.88.116:8086/library/alpine:latest
+FROM alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/backend .
 EXPOSE 8080
