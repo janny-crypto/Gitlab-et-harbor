@@ -10,6 +10,9 @@ build_frontend:
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - ping -c 4 google.com
+    - curl -I https://registry-1.docker.io
   script:
     - cd frontend
     - docker build -t harbor.host:8086/mardi/frontend:latest .
@@ -26,6 +29,9 @@ build_backend:
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - ping -c 4 google.com
+    - curl -I https://registry-1.docker.io
   script:
     - cd backend
     - docker build -t harbor.host:8086/mardi/backend:latest .
