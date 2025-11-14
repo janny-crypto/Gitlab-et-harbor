@@ -24,9 +24,10 @@ build_frontend:
   image: docker:24.0.5-cli
   services:
     - name: docker:24.0.5-dind
-      command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
+      #command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
   variables:
     DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
   script:
     - cd frontend
     - docker build -t harbor.host:8086/mardi/frontend:latest .
@@ -37,10 +38,11 @@ build_backend:
   image: docker:24.0.5-cli
   services:
     - name: docker:24.0.5-dind
-      command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
+      #command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
   
   variables:
     DOCKER_HOST: tcp://docker:2375/
+    DOCKER_TLS_CERTDIR: ""
   script:
     - cd backend
     - docker build -t harbor.host:8086/mardi/backend:latest .
