@@ -27,12 +27,7 @@ build_frontend:
       command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
   variables:
     DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
   script:
-    - echo "Adresse IP du conteneur DinD :"
-    - docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker ps -q -f "name=docker")
-    - sleep 30
-    - docker info
     - cd frontend
     - docker build -t harbor.host:8086/mardi/frontend:latest .
     - docker push harbor.host:8086/mardi/frontend:latest
@@ -46,10 +41,7 @@ build_backend:
   
   variables:
     DOCKER_HOST: tcp://docker:2375/
-    DOCKER_DRIVER: overlay2
   script:
-    - sleep 30
-    - docker info
     - cd backend
     - docker build -t harbor.host:8086/mardi/backend:latest .
     - docker push harbor.host:8086/mardi/backend:latest
