@@ -7,6 +7,12 @@ build_frontend:
   services:
     - name: docker:24.0.5-dind
       #command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
+      entrypoint:
+        - dockerd
+        - --host=tcp://0.0.0.0:2375
+        - --dns=8.8.8.8
+        - --tls=false
+
   variables:
     DOCKER_HOST: tcp://docker:2375/
     DOCKER_TLS_CERTDIR: ""
@@ -25,6 +31,12 @@ build_backend:
   services:
     - name: docker:24.0.5-dind
       #command: ["--tls=false", "--insecure-registry=harbor.host:8086"]
+      entrypoint:
+        - dockerd
+        - --host=tcp://0.0.0.0:2375
+        - --dns=8.8.8.8
+        - --tls=false
+
   
   variables:
     DOCKER_HOST: tcp://docker:2375/
