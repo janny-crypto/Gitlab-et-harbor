@@ -1,23 +1,5 @@
 stages:
-  - login
   - build
-  
-docker_login:
-  stage: login
-  image: "docker:latest"
-  services:
-    - name: docker:dind
-      command: ["--tls=false", "--insecure-registry=harbor.host:8086"]  # Ton domaine ou IP Harbor
-  variables:
-    HARBOR_REGISTRY: "harbor.host:8086"
-    DOCKER_TLS_CERTDIR: ""  # Désactive TLS entre le client et le daemon Docker DinD
-  before_script:
-    # Si ton Harbor est local, ajoute son IP au /etc/hosts
-    - echo "192.168.88.116 harbor.host" >> /etc/hosts
-  script:
-    - echo "$HARBOR_PASSWORD" | docker login $HARBOR_REGISTRY -u "$HARBOR_USERNAME" --password-stdin
-  only:
-    - main
 
 build_frontend:
   stage: build
@@ -31,6 +13,7 @@ build_frontend:
   script:
     - cd frontend
     - docker build -t harbor.host:8086/mardi/frontend:latest .
+    - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
     - docker push harbor.host:8086/mardi/frontend:latest
 
 build_backend:
@@ -46,4 +29,5 @@ build_backend:
   script:
     - cd backend
     - docker build -t harbor.host:8086/mardi/backend:latest .
+    - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
     - docker push harbor.host:8086/mardi/backend:latest
