@@ -5,7 +5,7 @@ COPY src/ .
 RUN go build -o backend .
 
 # Étape finale
-FROM harbor.host:8086/library/alpine:latest
+FROM http://harbor.host:8086/library/alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/backend .
 EXPOSE 8080
