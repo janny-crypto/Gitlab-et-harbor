@@ -5,12 +5,14 @@ default:
   image: docker:24.0.7-cli
   services:
     - name: docker:24.0.7-dind
-      command: ["--tls=false", "--dns=8.8.8.8", "--dns=1.1.1.1"]
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false", "--dns=8.8.8.8", "--dns=1.1.1.1"]
+
+  
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
   before_script:
-    - apk add curl
+    - apk add --no-cache curl
     - ping -c 4 google.com
     - curl -I https://registry-1.docker.io
 
