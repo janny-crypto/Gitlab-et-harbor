@@ -1,34 +1,40 @@
 stages:
-- ".pre"
-- build
-- ".post"
-default:
-  image: docker:24.0.7-cli
-  services:
-  - name: docker:24.0.7-dind
-    command:
-    - "--host=tcp://0.0.0.0:2375"
-    - "--tls=false"
-    - "--dns=8.8.8.8"
-    - "--dns=1.1.1.1"
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ''
-  before_script:
-  - apk add --no-cache curl
-  - ping -c 4 google.com
-  - curl -I https://registry-1.docker.io
+  - build
+
 build_frontend:
   stage: build
+  image: docker:24.0.7-cli
+  services:
+    - name: docker:24.0.7-dind
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false", "--dns=8.8.8.8", "--dns=1.1.1.1"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - apk add --no-cache curl
+    - ping -c 4 google.com
+    - curl -I https://registry-1.docker.io
   script:
-  - cd frontend
-  - docker build -t harbor.host:8086/mardi/frontend:latest .
-  - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
-  - docker push harbor.host:8086/mardi/frontend:latest
+    - cd frontend
+    - docker build -t harbor.host:8086/mardi/frontend:latest .
+    - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
+    - docker push harbor.host:8086/mardi/frontend:latest
+
 build_backend:
   stage: build
+  image: docker:24.0.7-cli
+  services:
+    - name: docker:24.0.7-dind
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false", "--dns=8.8.8.8", "--dns=1.1.1.1"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - apk add --no-cache curl
+    - ping -c 4 google.com
+    - curl -I https://registry-1.docker.io
   script:
-  - cd backend
-  - docker build -t harbor.host:8086/mardi/backend:latest .
-  - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
-  - docker push harbor.host:8086/mardi/backend:latest
+    - cd backend
+    - docker build -t harbor.host:8086/mardi/backend:latest .
+    - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
+    - docker push harbor.host:8086/mardi/backend:latest
