@@ -1,7 +1,10 @@
 stages:
   - test
 
-test_job:
+dns_test:
   stage: test
+  image: alpine:latest
   script:
-    - echo "Hello, World!"
+    - apk update
+    - apk add --no-cache iputils
+    - ping -c 4 google.com
