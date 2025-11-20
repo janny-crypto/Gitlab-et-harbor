@@ -1,36 +1,7 @@
-stages:
-  - test
-
-docker_dns_test:
-  stage: test
+build:
+  stage: build
   image: docker:27
-
-  services:
-    - name: docker:27-dind
-      alias: docker
-
-  variables:
-    DOCKER_HOST: tcp://docker:2375
-    DOCKER_TLS_CERTDIR: ""
-    DOCKER_DRIVER: overlay2
-
-    # Injecté automatiquement dans docker:dind → pas dans le job !
-    DOCKER_DAEMON_JSON: |
-      {
-        "dns": ["8.8.8.8", "1.1.1.1"],
-        "ipv6": false
-      }
-
   script:
-    - echo "✔️ Test docker info"
     - docker info
-
-    - echo "✔️ Test pull image"
-    - docker pull alpine:latest
-
-    - echo "✔️ Run container"
-    - docker run -d --name testnet alpine sleep 200
-
-    - docker exec testnet apk add --no-cache bind-tools iputils
-    - docker exec testnet ping -c 3 8.8.8.8
-    - docker exec testnet nslookup google.com
+    - docker pull alpine
+    - docker run --rm alpine ping -c 3 google.com
