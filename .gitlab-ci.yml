@@ -8,29 +8,29 @@ docker_dns_test:
   services:
     - name: docker:27-dind
       alias: docker
-      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
 
   variables:
     DOCKER_HOST: tcp://docker:2375
     DOCKER_TLS_CERTDIR: ""
     DOCKER_DRIVER: overlay2
 
-    # FIX DNS pour Docker-in-Docker
-    DOCKER_DAEMON_OPTIONS: '{"dns": ["8.8.8.8", "1.1.1.1"], "ipv6": false}'
+    # Injecté automatiquement dans docker:dind → pas dans le job !
+    DOCKER_DAEMON_JSON: |
+      {
+        "dns": ["8.8.8.8", "1.1.1.1"],
+        "ipv6": false
+      }
 
   script:
-    - echo "$DOCKER_DAEMON_OPTIONS" > /etc/docker/daemon.json
-
-    - echo "Restarting Docker inside dind..."
+    - echo "✔️ Test docker info"
     - docker info
 
-    - echo "✔️ Pull Alpine"
+    - echo "✔️ Test pull image"
     - docker pull alpine:latest
 
     - echo "✔️ Run container"
     - docker run -d --name testnet alpine sleep 200
 
     - docker exec testnet apk add --no-cache bind-tools iputils
-
     - docker exec testnet ping -c 3 8.8.8.8
     - docker exec testnet nslookup google.com
