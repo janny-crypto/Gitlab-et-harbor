@@ -1,24 +1,31 @@
 stages:
   - test
 
-dns_container_test:
+docker_dns_test:
   stage: test
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    DOCKER_DRIVER: overlay2
-  script:
-    - echo "Lancement du conteneur de test..."
-    - docker run -d --name testnet alpine:latest sleep 200
+  image: docker:27       # compatible avec dind
 
-    - echo "Install tools inside container..."
+  services:
+    - name: docker:27-dind
+      alias: docker
+      command: ["--host=tcp://0.0.0.0:2375", "--tls=false"]
+
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DRIVER: overlay2
+
+  script:
+    - echo "✔️ Test connexion au daemon Docker"
+    - docker info
+
+    - echo "✔️ Lancement conteneur test"
+    - docker run -d --name testnet alpine sleep 200
+
     - docker exec testnet apk add --no-cache bind-tools iputils
 
-    - echo "Test ping..."
+    - echo "✔️ Test ping"
     - docker exec testnet ping -c 3 8.8.8.8
 
-    - echo "Test DNS..."
+    - echo "✔️ Test DNS"
     - docker exec testnet nslookup google.com
-
-    - echo "DNS OK"
