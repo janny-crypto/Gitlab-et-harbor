@@ -1,6 +1,24 @@
-build:
-  stage: build
-  image: docker:27
+image: docker:27
+
+services:
+  - name: docker:27-dind
+    alias: docker
+    command:
+      - "--tls=false"
+      - "--host=tcp://0.0.0.0:2375"
+      - "--dns=8.8.8.8"
+      - "--dns=1.1.1.1"
+
+variables:
+  DOCKER_HOST: "tcp://docker:2375"
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_DRIVER: overlay2
+
+stages:
+  - test
+
+dns_test:
+  stage: test
   script:
     - docker info
     - docker pull alpine
