@@ -3,7 +3,7 @@ stages:
 
 docker_dns_test:
   stage: test
-  image: docker:27       # compatible avec dind
+  image: docker:27
 
   services:
     - name: docker:27-dind
@@ -15,17 +15,22 @@ docker_dns_test:
     DOCKER_TLS_CERTDIR: ""
     DOCKER_DRIVER: overlay2
 
+    # FIX DNS pour Docker-in-Docker
+    DOCKER_DAEMON_OPTIONS: '{"dns": ["8.8.8.8", "1.1.1.1"], "ipv6": false}'
+
   script:
-    - echo "✔️ Test connexion au daemon Docker"
+    - echo "$DOCKER_DAEMON_OPTIONS" > /etc/docker/daemon.json
+
+    - echo "Restarting Docker inside dind..."
     - docker info
 
-    - echo "✔️ Lancement conteneur test"
+    - echo "✔️ Pull Alpine"
+    - docker pull alpine:latest
+
+    - echo "✔️ Run container"
     - docker run -d --name testnet alpine sleep 200
 
     - docker exec testnet apk add --no-cache bind-tools iputils
 
-    - echo "✔️ Test ping"
     - docker exec testnet ping -c 3 8.8.8.8
-
-    - echo "✔️ Test DNS"
     - docker exec testnet nslookup google.com
