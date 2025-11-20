@@ -3,7 +3,7 @@ stages:
 
 dns_test:
   stage: test
-  image: alpine:latest
+  image: alpine:3.14
   script:
     - apk update
     - apk add --no-cache iputils
