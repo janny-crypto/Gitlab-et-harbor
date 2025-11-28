@@ -1,5 +1,5 @@
 FROM golang:1.22-alpine
 WORKDIR /app
-COPY src .
-RUN go build -o server src/main.go
+COPY . .
+RUN go build -o main .
 CMD ["./main"]
