@@ -15,7 +15,7 @@ default:
   services:
     - name: docker:27-dind
       alias: docker
-      command: ["--tls=false", "--host=tcp://0.0.0.0:2375", "--insecure-registry=$HARBOR_REGISTRY"]
+      command: ["--tls=false", "--host=tcp://0.0.0.0:2375", "--insecure-registry=harbor.host:8086"]
 
   before_script:
     - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
