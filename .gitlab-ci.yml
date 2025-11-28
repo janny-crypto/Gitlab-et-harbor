@@ -30,17 +30,6 @@ login-harbor:
     - develop
     - merge_requests
 
-# SCAN --------------------------------------------------------------
-
-scan-trivy:
-  stage: scan
-  script:
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image $FRONT_IMAGE:latest
-  only:
-    - main
-    - develop
-    - merge_requests
-
 # BUILD FRONT -------------------------------------------------------
 
 build-frontend:
@@ -65,6 +54,17 @@ build-backend:
     - develop
     - merge_requests
 
+# SCAN --------------------------------------------------------------
+
+scan-trivy:
+  stage: scan
+  script:
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image $FRONT_IMAGE:latest
+  only:
+    - main
+    - develop
+    - merge_requests
+    
 # PUSH FRONT --------------------------------------------------------
 
 push-frontend:
