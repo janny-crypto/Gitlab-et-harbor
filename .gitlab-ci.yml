@@ -48,6 +48,7 @@ build-backend:
 
 push-frontend:
   stage: push
+  needs: ["build-frontend"] 
   script:
     - docker push "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$FRONT_IMAGE:latest"
@@ -58,6 +59,7 @@ push-frontend:
 
 push-backend:
   stage: push
+  needs: ["build-backend"] 
   script:
     - docker push "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$BACK_IMAGE:latest"
