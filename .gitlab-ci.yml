@@ -13,10 +13,9 @@ docker_dns_test:
   variables:
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
-    # Fix DNS inside dind
     DOCKER_DAEMON_JSON: |
       {
-        "dns": ["8.8.8.8", "1.1.1.1"],
+        "dns": ["196.192.32.5"],
         "ipv6": false
       }
 
@@ -27,5 +26,5 @@ docker_dns_test:
     - echo ">>> Pull alpine"
     - docker pull alpine:latest
 
-    - echo ">>> Run test container"
-    - docker run --rm alpine nslookup google.com
+    - echo ">>> Test DNS inside Alpine"
+    - docker run --rm alpine sh -c "apk add --no-cache bind-tools && nslookup google.com"
