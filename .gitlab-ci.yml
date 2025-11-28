@@ -25,9 +25,6 @@ login-harbor:
   stage: login
   script:
     - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
-  artifacts:
-    paths:
-      - login.txt
   only:
     - main
     - develop
@@ -37,9 +34,8 @@ login-harbor:
 
 scan-trivy:
   stage: scan
-  image: aquasec/trivy:latest
   script:
-    - trivy fs --exit-code 0 --severity HIGH,CRITICAL .
+    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image $FRONT_IMAGE:latest
   only:
     - main
     - develop
