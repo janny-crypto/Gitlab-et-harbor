@@ -59,7 +59,8 @@ build-backend:
 scan-trivy:
   stage: scan
   script:
-    - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:latest image $FRONT_IMAGE:latest
+    - trivy image --scanners vuln "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - trivy image --scanners vuln "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA"
   only:
     - main
     - develop
