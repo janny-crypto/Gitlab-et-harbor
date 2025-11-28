@@ -9,7 +9,7 @@ stages:
   services:
     - name: docker:27-dind
       alias: docker
-      command: ["--tls=false", "--host=tcp://0.0.0.0:2375"]
+      command: ["--tls=false", "--host=tcp://0.0.0.0:2375", "--tls=false","--insecure-registry=harbor.host:8086"]
   variables:
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
