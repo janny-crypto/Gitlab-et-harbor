@@ -1,13 +1,12 @@
 stages:
-  - build_and_push
+  - build_push
+  - scan
 
 variables:
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_CERTDIR: ""
-  DOCKER_DRIVER: overlay2
-
   FRONT_IMAGE: "$HARBOR_REGISTRY/$HARBOR_PROJECT/frontend"
-  BACK_IMAGE:  "$HARBOR_REGISTRY/$HARBOR_PROJECT/backend"
+  BACK_IMAGE: "$HARBOR_REGISTRY/$HARBOR_PROJECT/backend"
 
 default:
   image: docker:27
@@ -16,13 +15,11 @@ default:
       alias: docker
       command: ["--tls=false", "--host=tcp://0.0.0.0:2375", "--insecure-registry=harbor.host:8086"]
 
-before_script:
-  - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
-
-# BUILD + PUSH FRONT
-build_and_push_front:
-  stage: build_and_push
+# BUILD & PUSH FRONTEND ------------------------------------------------
+build_and_push_frontend:
+  stage: build_push
   script:
+    - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
     - docker build -t "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA" frontend/
     - docker tag "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA" "$FRONT_IMAGE:latest"
     - docker push "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA"
@@ -32,10 +29,11 @@ build_and_push_front:
     - develop
     - merge_requests
 
-# BUILD + PUSH BACK
-build_and_push_back:
-  stage: build_and_push
+# BUILD & PUSH BACKEND -------------------------------------------------
+build_and_push_backend:
+  stage: build_push
   script:
+    - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
     - docker build -t "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA" backend/
     - docker tag "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA" "$BACK_IMAGE:latest"
     - docker push "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA"
@@ -44,3 +42,33 @@ build_and_push_back:
     - main
     - develop
     - merge_requests
+
+# SCAN FRONTEND --------------------------------------------------------
+scan_frontend:
+  stage: scan
+  image: aquasec/trivy:latest
+  script:
+    - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
+    - docker pull "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - trivy image --scanners vuln "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA"
+  only:
+    - main
+    - develop
+    - merge_requests
+  needs:
+    - build_and_push_frontend
+
+# SCAN BACKEND ---------------------------------------------------------
+scan_backend:
+  stage: scan
+  image: aquasec/trivy:latest
+  script:
+    - docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" -p "$HARBOR_PASSWORD"
+    - docker pull "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA"
+    - trivy image --scanners vuln "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA"
+  only:
+    - main
+    - develop
+    - merge_requests
+  needs:
+    - build_and_push_backend
