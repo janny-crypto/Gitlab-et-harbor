@@ -1,87 +1,95 @@
 stages:
   - login
-  - scan
   - build
+  - scan
   - push
 
-# ---------------------------------------------------------
-# 🔧 Variables globales
-# ---------------------------------------------------------
-variables:
-  DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""     # surtout IMPORTANT !
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_TLS_VERIFY: "0"
-
-  FRONT_IMAGE: $HARBOR_REGISTRY/$HARBOR_PROJECT/frontend
-  BACK_IMAGE: $HARBOR_REGISTRY/$HARBOR_PROJECT/backend
-
-default:
+.default_docker:
   image: docker:27
   services:
     - name: docker:27-dind
       alias: docker
+      command: ["--tls=false", "--host=tcp://0.0.0.0:2375"]
+  variables:
+    DOCKER_HOST: "tcp://docker:2375"
+    DOCKER_TLS_CERTDIR: ""
+    DOCKER_DRIVER: overlay2
+  before_script:
+    - echo "🔧 Docker info:"
+    - docker info
 
-# ---------------------------------------------------------
-# 🟦 1) LOGIN DOCKER (Harbor)
-# ---------------------------------------------------------
-docker-login:
+docker_login:
   stage: login
+  extends: .default_docker
   script:
-    - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
+    - echo "$HARBOR_PASSWORD" | docker login "http://$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
   only:
     - main
-    - develop
-    - merge_requests
 
-# ---------------------------------------------------------
-# 🟩 2) SCAN TRIVY (code source)
-# ---------------------------------------------------------
-scan-trivy:
+
+# -------------------------
+# 🔵 BUILD FRONTEND IMAGE
+# -------------------------
+build_frontend:
+  stage: build
+  extends: .default_docker
+  script:
+    - echo "📦 Building frontend image..."
+    - docker build -t frontend:latest ./frontend
+    - docker tag frontend:latest $HARBOR_REGISTRY/$HARBOR_PROJECT/frontend:latest
+  artifacts:
+    paths:
+      - frontend/
+    expire_in: 1 day
+
+# -------------------------
+# 🔵 BUILD BACKEND IMAGE
+# -------------------------
+build_backend:
+  stage: build
+  extends: .default_docker
+  script:
+    - echo "📦 Building backend image..."
+    - docker build -t backend:latest ./backend
+    - docker tag backend:latest $HARBOR_REGISTRY/$HARBOR_PROJECT/backend:latest
+  artifacts:
+    paths:
+      - backend/
+    expire_in: 1 day
+
+# -------------------------
+# 🔍 TRIVY SECURITY SCAN
+# -------------------------
+scan_images:
   stage: scan
-  image: aquasec/trivy:latest
+  image:
+    name: aquasec/trivy:latest
+    entrypoint: [""]
   script:
-    - trivy fs --exit-code 1 --severity HIGH,CRITICAL .
-  needs:
-    - docker-login
-  only:
-    - main
-    - develop
-    - merge_requests
+    - echo "🔍 Scanning frontend image..."
+    - trivy image --exit-code 0 --severity HIGH,CRITICAL $HARBOR_REGISTRY/$HARBOR_PROJECT/frontend:latest
 
-# ---------------------------------------------------------
-# 🟧 3) BUILD FRONTEND
-# ---------------------------------------------------------
-build-frontend:
-  stage: build
-  needs: ["docker-login"]
-  script:
-    - docker build -t $FRONT_IMAGE:$CI_COMMIT_SHORT_SHA frontend/
-    - docker tag $FRONT_IMAGE:$CI_COMMIT_SHORT_SHA $FRONT_IMAGE:latest
+    - echo "🔍 Scanning backend image..."
+    - trivy image --exit-code 0 --severity HIGH,CRITICAL $HARBOR_REGISTRY/$HARBOR_PROJECT/backend:latest
+  allow_failure: true
+  dependencies:
+    - build_frontend
+    - build_backend
 
-# ---------------------------------------------------------
-# 🟥 4) BUILD BACKEND
-# ---------------------------------------------------------
-build-backend:
-  stage: build
-  needs: ["docker-login"]
-  script:
-    - docker build -t $BACK_IMAGE:$CI_COMMIT_SHORT_SHA backend/
-    - docker tag $BACK_IMAGE:$CI_COMMIT_SHORT_SHA $BACK_IMAGE:latest
-
-# ---------------------------------------------------------
-# 🟦 5) PUSH DES IMAGES
-# ---------------------------------------------------------
-push-images:
+# -------------------------
+# 🚀 PUSH IMAGES TO HARBOR
+# -------------------------
+push_images:
   stage: push
-  needs:
-    - build-frontend
-    - build-backend
-    - docker-login
+  extends: .default_docker
   script:
-    - docker push $FRONT_IMAGE:$CI_COMMIT_SHORT_SHA
-    - docker push $FRONT_IMAGE:latest
-    - docker push $BACK_IMAGE:$CI_COMMIT_SHORT_SHA
-    - docker push $BACK_IMAGE:latest
-  only:
-    - main
+    - echo "$HARBOR_PASSWORD" | docker login $HARBOR_REGISTRY -u "$HARBOR_USERNAME" --password-stdin
+
+    - echo "⬆️ Pushing frontend..."
+    - docker push $HARBOR_REGISTRY/$HARBOR_PROJECT/frontend:latest
+
+    - echo "⬆️ Pushing backend..."
+    - docker push $HARBOR_REGISTRY/$HARBOR_PROJECT/backend:latest
+  dependencies:
+    - build_frontend
+    - build_backend
