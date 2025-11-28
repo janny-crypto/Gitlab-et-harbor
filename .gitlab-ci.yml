@@ -1,4 +1,5 @@
 stages:
+  - login
   - build
   - scan
   - push
@@ -20,8 +21,14 @@ default:
 
 # LOGIN -------------------------------------------------------------
 
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+login-harbor:
+  stage: login
+  script:
+    - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
+  only:
+    - main
+    - develop
+    - merge_requests
 
 # BUILD FRONT -------------------------------------------------------
 
