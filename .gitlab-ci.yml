@@ -13,12 +13,6 @@ docker_dns_test:
   variables:
     DOCKER_HOST: "tcp://docker:2375"
     DOCKER_TLS_CERTDIR: ""
-    DOCKER_DAEMON_JSON: |
-      {
-        "dns": ["196.192.32.5"],
-        "ipv6": false
-      }
-
   script:
     - echo ">>> docker info"
     - docker info
