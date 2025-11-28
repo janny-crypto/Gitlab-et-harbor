@@ -1,7 +1,7 @@
 stages:
   - login
-  - scan
   - build
+  - scan
   - push
 
 variables:
@@ -64,7 +64,7 @@ scan-trivy:
     - main
     - develop
     - merge_requests
-    
+
 # PUSH FRONT --------------------------------------------------------
 
 push-frontend:
