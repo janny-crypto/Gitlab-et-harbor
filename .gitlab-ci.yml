@@ -4,9 +4,12 @@ stages:
   - build
   - push
 
+# ---------------------------------------------------------
+# 🔧 Variables globales
+# ---------------------------------------------------------
 variables:
   DOCKER_DRIVER: overlay2
-  DOCKER_TLS_CERTDIR: ""
+  DOCKER_TLS_CERTDIR: ""     # surtout IMPORTANT !
   DOCKER_HOST: tcp://docker:2375
   DOCKER_TLS_VERIFY: "0"
 
@@ -19,25 +22,26 @@ default:
     - name: docker:27-dind
       alias: docker
 
+# ---------------------------------------------------------
+# 🟦 1) LOGIN DOCKER (Harbor)
+# ---------------------------------------------------------
 docker-login:
   stage: login
   script:
     - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
-  artifacts:
-    expire_in: 1 hour
-    reports:
-      dotenv: login.env   
   only:
     - main
     - develop
     - merge_requests
 
+# ---------------------------------------------------------
+# 🟩 2) SCAN TRIVY (code source)
+# ---------------------------------------------------------
 scan-trivy:
   stage: scan
   image: aquasec/trivy:latest
   script:
-    - echo "Analyse de sécurité avec Trivy"
-    - trivy fs --exit-code 1 --severity HIGH,CRITICAL --no-progress .
+    - trivy fs --exit-code 1 --severity HIGH,CRITICAL .
   needs:
     - docker-login
   only:
@@ -45,30 +49,29 @@ scan-trivy:
     - develop
     - merge_requests
 
+# ---------------------------------------------------------
+# 🟧 3) BUILD FRONTEND
+# ---------------------------------------------------------
 build-frontend:
   stage: build
   needs: ["docker-login"]
   script:
-    - echo " Build frontend"
     - docker build -t $FRONT_IMAGE:$CI_COMMIT_SHORT_SHA frontend/
     - docker tag $FRONT_IMAGE:$CI_COMMIT_SHORT_SHA $FRONT_IMAGE:latest
-  artifacts:
-    paths:
-      - .docker/frontend_built
-    expire_in: 2 hours
 
+# ---------------------------------------------------------
+# 🟥 4) BUILD BACKEND
+# ---------------------------------------------------------
 build-backend:
   stage: build
   needs: ["docker-login"]
   script:
-    - echo "Build backend"
     - docker build -t $BACK_IMAGE:$CI_COMMIT_SHORT_SHA backend/
     - docker tag $BACK_IMAGE:$CI_COMMIT_SHORT_SHA $BACK_IMAGE:latest
-  artifacts:
-    paths:
-      - .docker/backend_built
-    expire_in: 2 hours
 
+# ---------------------------------------------------------
+# 🟦 5) PUSH DES IMAGES
+# ---------------------------------------------------------
 push-images:
   stage: push
   needs:
@@ -76,15 +79,9 @@ push-images:
     - build-backend
     - docker-login
   script:
-    - echo "Push des images vers Harbor ($HARBOR_PROJECT)"
-
-    # FRONTEND
     - docker push $FRONT_IMAGE:$CI_COMMIT_SHORT_SHA
     - docker push $FRONT_IMAGE:latest
-
-    # BACKEND
     - docker push $BACK_IMAGE:$CI_COMMIT_SHORT_SHA
     - docker push $BACK_IMAGE:latest
-
   only:
     - main
