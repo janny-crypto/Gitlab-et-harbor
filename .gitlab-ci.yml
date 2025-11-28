@@ -1,6 +1,5 @@
 stages:
-  - build
-  - push
+  - build_and_push
 
 variables:
   DOCKER_HOST: tcp://docker:2375
@@ -20,48 +19,28 @@ default:
 before_script:
   - echo "$HARBOR_PASSWORD" | docker login "$HARBOR_REGISTRY" -u "$HARBOR_USERNAME" --password-stdin
 
-# --------------------- BUILD FRONT ---------------------
-
-build-frontend:
-  stage: build
+# BUILD + PUSH FRONT
+build_and_push_front:
+  stage: build_and_push
   script:
     - docker build -t "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA" frontend/
     - docker tag "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA" "$FRONT_IMAGE:latest"
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# --------------------- BUILD BACK ----------------------
-
-build-backend:
-  stage: build
-  script:
-    - docker build -t "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA" backend/
-    - docker tag "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA" "$BACK_IMAGE:latest"
-  only:
-    - main
-    - develop
-    - merge_requests
-
-# --------------------- PUSH FRONT ----------------------
-
-push-frontend:
-  stage: push
-  needs: ["build-frontend"] 
-  script:
     - docker push "$FRONT_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$FRONT_IMAGE:latest"
   only:
     - main
+    - develop
+    - merge_requests
 
-# --------------------- PUSH BACK -----------------------
-
-push-backend:
-  stage: push
-  needs: ["build-backend"] 
+# BUILD + PUSH BACK
+build_and_push_back:
+  stage: build_and_push
   script:
+    - docker build -t "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA" backend/
+    - docker tag "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA" "$BACK_IMAGE:latest"
     - docker push "$BACK_IMAGE:$CI_COMMIT_SHORT_SHA"
     - docker push "$BACK_IMAGE:latest"
   only:
     - main
+    - develop
+    - merge_requests
