@@ -1,11 +1,2 @@
-import React from 'react';
+console.log("Frontend App.js is running...");
 
-function App() {
-  return (
-    <div>
-      <h1>Hello from Frontend!</h1>
-    </div>
-  );
-}
-
-export default App;
