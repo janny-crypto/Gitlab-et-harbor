@@ -23,6 +23,40 @@ project/
 
 # 2. Prérequis
 
+IMPORTANT: notre configuration runner reste le même que celui dans l'installation
+```toml
+concurrent = 1
+check_interval = 0
+connection_max_age = "15m0s"
+shutdown_timeout = 0
+
+[session_server]
+  session_timeout = 1800
+
+[[runners]]
+  name = "therunner"
+  url = "http://gitlab.local:8082"
+  token = "VOTRE_TOKKEN"
+  executor = "docker"
+  [runners.docker]
+    tls_verify = false
+    image = "docker:27"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    extra_hosts = [
+      "harbor.host:192.168.88.116",
+      "gitlab.local:192.168.88.116"
+    ]
+    # Important pour DIND stable
+    volumes = [
+      "/cache"
+    ]
+    network_mode = "bridge"
+  [runners.cache]
+```
+
 ## 2.1 GitLab local fonctionnel
   
 - GitLab doit être opérationnelle (HTTP)
@@ -70,6 +104,18 @@ Cocher :
 | `HARBOR_USERNAME` | utilisateur Harbor  |
 | `HARBOR_PASSWORD` | mot de passe Harbor |
 ```
+
+## 2.6 Dépot gitlab
+- Afin d'executer le job il suffit de le mettre sur gitlab
+```bash
+git clone <URL_HTTPS_du_dépôt>
+cd <nom_du_dépôt>
+git remote add origin <http://gitlab.local:8082/root/exemple-projet.git> (ici on utilise le lien vers notre projet gitlab)
+git branch -M main
+git push -uf origin main
+
+```
+- Une fois que le dépot est fini, normalement le job sera un succès
 
 ---
 
